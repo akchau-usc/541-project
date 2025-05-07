@@ -1,58 +1,85 @@
-import pandas as pd
-from sklearn.model_selection import train_test_split, RandomizedSearchCV
+import os
+import numpy as np
+from scipy.io import wavfile
+from numpy.fft import fft, fftfreq
+from scipy.signal import find_peaks
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix
+import matplotlib.pyplot as plt
 
-# 1) Load feature table from CSV
-csv_path = "/Users/annachau/Documents/USC/EE541/final_project/541-project/data/chord_features.csv"
-df = pd.read_csv(csv_path)
+# 1) Harmonic extraction
+def find_harmonics(path, min_freq=50, height_frac=0.05):
+    fs, data = wavfile.read(path)
+    data = data.astype(float)
+    N = len(data)
+    spectrum = np.abs(fft(data))[:N//2] * (2.0/N)
+    freqs    = fftfreq(N, 1/fs)[:N//2]
+    peaks, _ = find_peaks(
+        spectrum,
+        height=spectrum.max()*height_frac,
+        distance=10
+    )
+    peaks = peaks[freqs[peaks] > min_freq]
+    return freqs[peaks]
 
-# 2) Split into X / y
-X = df.drop('label', axis=1).values
-y = df['label'].values
+# 2) Build the 7-dim interval feature
+def extract_intervals(path):
+    harm = find_harmonics(path)
+    if len(harm) < 7:
+        harm = np.pad(harm, (0, 7 - len(harm)), mode='edge')
+    # consecutive ratios: H2/H1, H3/H2, H4/H3, H5/H4
+    consec = harm[1:5] / harm[:4]
+    # root-relative ratios: H5/H1, H6/H1, H7/H1
+    rel    = harm[4:7] / harm[0]
+    return np.concatenate([consec, rel], axis=0)
 
-# 3) Train/test split
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, stratify=y, test_size=0.2, random_state=42
-)
+# 3) Load all WAVs into X, y
+data_dir = "/Users/annachau/Documents/USC/EE541/final_project/541-project/data/Audio_Files"
+features, labels = [], []
+for chord, lbl in [("Minor", 0), ("Major", 1)]:
+    folder = os.path.join(data_dir, chord)
+    for fname in os.listdir(folder):
+        if fname.lower().endswith(".wav"):
+            features.append(extract_intervals(os.path.join(folder, fname)))
+            labels.append(lbl)
 
-# 4) Scale features
-scaler = StandardScaler().fit(X_train)
-X_train = scaler.transform(X_train)
-X_test  = scaler.transform(X_test)
+X = np.array(features, dtype=np.float32)  # shape (n_samples, 7)
+y = np.array(labels, dtype=np.int32)
 
-# 5) Train initial Random Forest
-rf = RandomForestClassifier(
-    n_estimators=100,
-    class_weight='balanced',
+# 4) Train/val split + scaling
+train_X, val_X, train_y, val_y = train_test_split(
+    X, y,
+    test_size=0.30,
     random_state=42,
-    n_jobs=-1
+    stratify=y
 )
-rf.fit(X_train, y_train)
+scaler  = StandardScaler().fit(train_X)
+train_X = scaler.transform(train_X)
+val_X   = scaler.transform(val_X)
 
-# 6) Evaluate
-y_pred = rf.predict(X_test)
-print("=== Initial Random Forest ===")
-print(classification_report(y_test, y_pred))
-print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
-
-# 7) Hyperparameter search
-param_dist = {
-    'n_estimators': [50, 100, 200],
-    'max_depth':    [None, 10, 20],
-    'min_samples_leaf': [1, 2, 4]
-}
-
-search = RandomizedSearchCV(
-    rf, param_dist,
-    n_iter=10, cv=5,
-    scoring='accuracy',
-    n_jobs=-1,
+# 5) Random Forest training
+rf = RandomForestClassifier(
+    n_estimators=200,
+    max_depth=None,
     random_state=42
 )
-search.fit(X_train, y_train)
+rf.fit(train_X, train_y)
 
-print("\n=== Randomized Search Results ===")
-print("Best params:", search.best_params_)
-print("Best CV accuracy:", search.best_score_)
+# 6) Evaluation
+preds = rf.predict(val_X)
+print("Classification Report:\n", classification_report(val_y, preds))
+print("Confusion Matrix:\n", confusion_matrix(val_y, preds))
+
+# 7) (Optional) Feature importance plot
+importances = rf.feature_importances_
+plt.bar(range(len(importances)), importances)
+plt.xticks(range(7), [
+    "H2/H1","H3/H2","H4/H3","H5/H4",
+    "H5/H1","H6/H1","H7/H1"
+], rotation=45)
+plt.ylabel("Feature Importance")
+plt.title("Random Forest Importances")
+plt.tight_layout()
+plt.show()

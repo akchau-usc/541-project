@@ -63,6 +63,17 @@ train_X = scaler.transform(train_X)[..., np.newaxis]
 val_X   = scaler.transform(val_X)[...,   np.newaxis]
 
 # 5) Simple 1D-CNN
+''' 
+model = Sequential([
+    Conv1D(256, 4, activation='relu', input_shape=(train_X.shape[1], 1)),
+    Conv1D(128, 3, activation='relu'),
+    Conv1D( 64, 2, activation='relu'),
+    Flatten(),
+    Dropout(0.2),
+    Dense(1, activation='sigmoid')
+])
+'''
+# testing
 model = Sequential([
     Conv1D(256, 4, activation='relu', input_shape=(train_X.shape[1], 1)),
     Conv1D(128, 3, activation='relu'),
@@ -81,7 +92,7 @@ model.compile(
 history = model.fit(
     train_X, train_y,
     epochs=200,
-    batch_size=64,
+    batch_size=32,
     validation_data=(val_X, val_y),
     verbose=2
 )
