@@ -1,0 +1,40 @@
+HYPERPARAMETERS
+  num_epochs:   20
+  batch_size:   16
+  learning_rate:0.01
+  dataset_path: /Users/annachau/Documents/USC/EE541/final_project/541-project/data/Audio_Files
+  n_fft:        2048
+  hop_length:   512
+  n_mfcc:       20
+
+MODEL ARCHITECTURE
+CNN1DClassifier(
+  (conv1): Sequential(
+    (0): Conv1d(1059, 32, kernel_size=(3,), stride=(1,), padding=(1,))
+    (1): ReLU(inplace=True)
+    (2): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (3): MaxPool1d(kernel_size=4, stride=4, padding=0, dilation=1, ceil_mode=False)
+    (4): Dropout1d(p=0.2, inplace=False)
+  )
+  (conv2): Sequential(
+    (0): Conv1d(32, 64, kernel_size=(3,), stride=(1,), padding=(1,))
+    (1): ReLU(inplace=True)
+    (2): BatchNorm1d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (3): MaxPool1d(kernel_size=4, stride=4, padding=0, dilation=1, ceil_mode=False)
+    (4): Dropout1d(p=0.2, inplace=False)
+  )
+  (conv3): Sequential(
+    (0): Conv1d(64, 64, kernel_size=(3,), stride=(1,), padding=(1,))
+    (1): ReLU(inplace=True)
+    (2): BatchNorm1d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (3): MaxPool1d(kernel_size=4, stride=4, padding=0, dilation=1, ceil_mode=False)
+  )
+  (classifier): Sequential(
+    (0): Flatten(start_dim=1, end_dim=-1)
+    (1): Linear(in_features=192, out_features=128, bias=True)
+    (2): ReLU(inplace=True)
+    (3): Linear(in_features=128, out_features=2, bias=True)
+  )
+)
+
+TOTAL PARAMETERS: 145538
