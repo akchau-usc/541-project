@@ -67,12 +67,10 @@ for label in ["Major","Minor"]:
             feats['label'] = label
             rows.append(feats)
 df = pd.DataFrame(rows)
-print(df.shape, df.columns)
-
-print(df.shape, df.columns)
+#print(df.shape, df.columns)
 
 # save csv
-output_path = "/Users/annachau/Documents/USC/EE541/final_project/541-project/data/chord_features.csv"
+output_path = "/Users/annachau/Documents/USC/EE541/final_project/541-project/data/librosa_data.csv"
 df.to_csv(output_path, index=False)
-print(f"Saved feature table to {output_path}")
+print(f"saved librosa feature table to {output_path}")
 
