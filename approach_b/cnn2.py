@@ -1,15 +1,18 @@
 import os
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
 from scipy.io import wavfile
 from scipy.fft import fft, fftfreq
-from numpy.fft import fft, fftfreq
 from scipy.signal import find_peaks
+
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import confusion_matrix, classification_report
-import matplotlib.pyplot as plt
+from sklearn.metrics import classification_report, confusion_matrix
+
 import tensorflow as tf
-from tensorflow.keras.models import Sequential
+from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Conv1D, Flatten, Dropout, Dense
 from tensorflow.keras.optimizers import Adam
 
@@ -24,11 +27,9 @@ def find_harmonics(path, min_freq=50, height_frac=0.05):
     N = len(data)
     spectrum = np.abs(fft(data))[:N//2] * (2.0/N)
     freqs = fftfreq(N, 1/fs)[:N//2]
-    peaks, _ = find_peaks(
-        spectrum,
-        height=spectrum.max()*height_frac,
-        distance=10
-    )
+    peaks, _ = find_peaks(spectrum,
+                          height=spectrum.max()*height_frac,
+                          distance=10)
     peaks = peaks[freqs[peaks] > min_freq]
     return freqs[peaks]
 
@@ -46,83 +47,128 @@ and can help the RF distinguish certain patterns in these ratios to classify maj
 def extract_intervals(path):
     harm = find_harmonics(path)
     if len(harm) < 7:
-        harm = np.pad(harm, (0, 7 - len(harm)), mode='edge')
-    consec = harm[1:5] / harm[:4]      # H2/H1, H3/H2, H4/H3, H5/H4
-    rel   = harm[4:7] / harm[0]        # H5/H1, H6/H1, H7/H1
+        harm = np.pad(harm, (0,7-len(harm)), mode='edge')
+    consec = harm[1:5] / harm[:4]
+    rel    = harm[4:7] / harm[0]
     return np.concatenate([consec, rel], axis=0)
 
-# load data and process
-data_dir = "/Users/annachau/Documents/USC/EE541/final_project/541-project/data/Audio_Files"
-features, labels = [], []
-for chord, lbl in [("Minor", 0), ("Major", 1)]:
-    folder = os.path.join(data_dir, chord)
-    for fname in os.listdir(folder):
-        if fname.lower().endswith(".wav"):
-            features.append(extract_intervals(os.path.join(folder, fname)))
+class CNNChordClassifier:
+    def __init__(self, n_features, lr=1e-3):
+        self.n_features = n_features
+        self.model = self.build_model()
+        self.model.compile(
+            optimizer=Adam(learning_rate=lr),
+            loss='binary_crossentropy',
+            metrics=['accuracy']
+        )
+
+    def build_model(self):
+        return Sequential([
+            Conv1D(256, 3, activation='relu', padding='same', input_shape=(self.n_features,1)),
+            Conv1D(128, 3, activation='relu', padding='same'),
+            Conv1D(64, 3, activation='relu', padding='same'),
+            Dropout(0.2),
+            Flatten(),
+            Dense(64, activation='relu'),
+            Dropout(0.2),
+            Dense(1, activation='sigmoid')
+        ])
+
+    def train(self, X_train, y_train, validation_split=0.1,
+              epochs=200, batch_size=32, verbose=2):
+        return self.model.fit(
+            X_train, y_train,
+            validation_split=validation_split,
+            epochs=epochs,
+            batch_size=batch_size,
+            verbose=verbose
+        )
+
+    def evaluate(self, X_test, y_test):
+        return self.model.evaluate(X_test, y_test, verbose=0)
+
+    def predict(self, X):
+        return self.model.predict(X)
+
+    def save(self, path):
+        self.model.save(path)
+        print(f"model saved to {path}")
+
+def main():
+    data_dir = "/Users/annachau/Documents/USC/EE541/final_project/541-project/data/Audio_Files"
+    features, labels = [], []
+
+    for chord, lbl in [("Minor",0), ("Major",1)]:
+        folder = os.path.join(data_dir, chord)
+        for fname in sorted(os.listdir(folder)):
+            if not fname.lower().endswith(".wav"):
+                continue
+            path = os.path.join(folder, fname)
+            feats = extract_intervals(path)
+            features.append(feats)
             labels.append(lbl)
 
-X = np.array(features, dtype=np.float32)
-y = np.array(labels, dtype=np.int32)
+    X = np.array(features, dtype=np.float32)
+    y = np.array(labels, dtype=np.int32)
 
-# split data
-train_X, val_X, train_y, val_y = train_test_split(
-    X, y,
-    test_size=0.3,
-    random_state=7,
-    stratify=y
-)
-scaler  = StandardScaler().fit(train_X)
-train_X = scaler.transform(train_X)[..., np.newaxis]
-val_X   = scaler.transform(val_X)[...,   np.newaxis]
+    # hyper parameters
+    test_size    = 0.3
+    random_seed  = 7
+    batch_size   = 32
+    epochs       = 200
+    lr           = 1e-3
 
-# CNN model
-''' 
-model = Sequential([
-    Conv1D(256, 4, activation='relu', input_shape=(train_X.shape[1], 1)),
-    Conv1D(128, 3, activation='relu'),
-    Conv1D( 64, 2, activation='relu'),
-    Flatten(),
-    Dropout(0.2),
-    Dense(1, activation='sigmoid')
-])
-'''
-# testing
-model = Sequential([
-    Conv1D(256, 4, activation='relu', input_shape=(train_X.shape[1], 1)),
-    Conv1D(128, 3, activation='relu'),
-    Conv1D( 64, 2, activation='relu'),
-    Flatten(),
-    Dropout(0.2),
-    Dense(1, activation='sigmoid')
-])
-model.compile(
-    optimizer=Adam(),
-    loss='binary_crossentropy',
-    metrics=['accuracy']
-)
+    # data split
+    X_tr, X_te, y_tr, y_te = train_test_split(
+        X, y, test_size=test_size, random_state=random_seed, stratify=y
+    )
+    scaler = StandardScaler().fit(X_tr)
+    X_tr = scaler.transform(X_tr)[...,None]
+    X_te = scaler.transform(X_te)[...,None]
 
-# train
-history = model.fit(
-    train_X, train_y,
-    epochs=200,
-    batch_size=32,
-    validation_data=(val_X, val_y),
-    verbose=2
-)
+    # build + train
+    n_feats = X_tr.shape[1]
+    classifier = CNNChordClassifier(n_features=n_feats, lr=lr)
+    classifier.model.summary()
 
-# eval 
-val_loss, val_acc = model.evaluate(val_X, val_y, verbose=0)
-print("Validation Loss: {:.4f}, Accuracy: {:.4f}".format(val_loss, val_acc))
+    history = classifier.train(X_tr, y_tr,
+                               validation_split=0.1,
+                               epochs=epochs,
+                               batch_size=batch_size)
 
-# predict
-preds = (model.predict(val_X) > 0.5).astype(int).flatten()
-print("Classification Report:\n{}".format(
-    classification_report(val_y, preds)))
-print("Confusion Matrix:\n{}".format(
-    confusion_matrix(val_y, preds)))
+    # save model
+    model_path = "/Users/annachau/Documents/USC/EE541/final_project/541-project/approach_b/models/cnn2/cnn2_m2.h5"
+    classifier.save(model_path)
 
-# plot accuracy
-plt.plot(history.history['accuracy'], label='Train Acc')
-plt.plot(history.history['val_accuracy'], label='Val Acc')
-plt.xlabel('Epoch'); plt.ylabel('Accuracy')
-plt.legend(); plt.show()
+    # eval
+    loss, acc = classifier.evaluate(X_te, y_te)
+    print(f"\nTest loss: {loss:.4f}, accuracy: {acc:.4f}\n")
+
+    y_pred = (classifier.predict(X_te) > 0.5).astype(int).flatten()
+    print("Confusion Matrix:")
+    print(confusion_matrix(y_te, y_pred, labels=[0,1]))
+    print("\nClassification Report:")
+    print(classification_report(y_te, y_pred, target_names=["Minor","Major"]))
+
+    # plot training curves
+    epochs = range(1, len(history.history['loss'])+1)
+    plt.figure(figsize=(12,4))
+    plt.subplot(1,2,1)
+    plt.plot(epochs, history.history['loss'], label='Train Loss')
+    plt.plot(epochs, history.history['val_loss'], label='Val Loss')
+    plt.title('Loss vs Epoch')
+    plt.xlabel('Epoch'); plt.ylabel('Loss')
+    plt.legend(); plt.grid(True)
+
+    plt.subplot(1,2,2)
+    plt.plot(epochs, history.history['accuracy'], label='Train Acc')
+    plt.plot(epochs, history.history['val_accuracy'], label='Val Acc')
+    plt.title('Accuracy vs Epoch')
+    plt.xlabel('Epoch'); plt.ylabel('Accuracy')
+    plt.legend(); plt.grid(True)
+
+    plt.tight_layout()
+    plt.show()
+
+if __name__ == "__main__":
+    main()

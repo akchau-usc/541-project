@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+import joblib
 
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
@@ -11,6 +12,8 @@ import matplotlib.pyplot as plt
 
 DATA_DIR      = "/Users/annachau/Documents/USC/EE541/final_project/541-project/data/Audio_Files"
 FEATURES_DIR  = "/Users/annachau/Documents/USC/EE541/final_project/541-project/data"
+MODELS_DIR = "/Users/annachau/Documents/USC/EE541/final_project/541-project/approach_a/models"
+
 INTERVALS_CSV = os.path.join(FEATURES_DIR, "harmonic_data.csv")
 LIBROSA_CSV   = os.path.join(FEATURES_DIR, "librosa_data.csv")
 FFT_CSV       = os.path.join(FEATURES_DIR, "fft_ratio_data.csv") 
@@ -50,6 +53,8 @@ def run_intervals_rf(csv_path, test_size=0.3, random_state=7):
     rf.fit(X_train, y_train)
     preds = rf.predict(X_val)
 
+    joblib.dump(rf, os.path.join(MODELS_DIR, "harmonics_rf.pkl"))
+
     print("=== Harmonic Intervals RF ===")
     print(classification_report(y_val, preds, target_names=["Minor","Major"]))
     cm = confusion_matrix(y_val, preds)
@@ -82,6 +87,8 @@ def run_librosa_rf(csv_path, test_size=0.3, random_state=42):
     rf.fit(X_train, y_train)
     preds = rf.predict(X_val)
 
+    joblib.dump(rf, os.path.join(MODELS_DIR, "librosa_rf.pkl"))
+
     print("\n=== Librosa RF ===")
     print(classification_report(y_val, preds, target_names=le.classes_))
     cm = confusion_matrix(y_val, preds)
@@ -112,6 +119,8 @@ def run_fft_ratio_rf(csv_path, test_size=0.3, random_state=42):
     rf = RandomForestClassifier(n_estimators=200, random_state=random_state)
     rf.fit(X_train, y_train)
     preds = rf.predict(X_val)
+
+    joblib.dump(rf, os.path.join(MODELS_DIR, "fft_ratio_rf.pkl"))
 
     print("\n=== FFT Ratio RF ===")
     print(classification_report(y_val, preds, target_names=le.classes_))
