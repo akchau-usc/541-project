@@ -42,8 +42,8 @@ df = pd.concat([
     df_fft.drop(columns=["filename","label","fundamental_freq","second_peak_freq"])
 ], axis=1)
 
-#output_path = "/Users/annachau/Documents/USC/EE541/final_project/541-project/data/merged_data.csv"
-df.to_csv(args.output_model, index=False)
+output_path = "/Users/annachau/Documents/USC/EE541/final_project/541-project/data/merged_data.csv"
+df.to_csv(output_path, index=False)
 
 # make sure labels didnt shift
 assert (df["label"] == df_lib["label"]).all()
@@ -134,23 +134,23 @@ print("model cnn1 saved")
 plt.figure()
 plt.plot(history.history['loss'],     label='train loss')
 plt.plot(history.history['val_loss'], label='val   loss')
-plt.title('Training vs. Validation Loss')
+plt.title('CNN #1: Loss vs. Epoch')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.legend()
 plt.tight_layout()
-plt.savefig('loss_plot.png')
+plt.savefig('CNN1_loss_plot.png')
 plt.show()
 
 plt.figure()
 plt.plot(history.history['accuracy'],      label='train accuracy')
 plt.plot(history.history['val_accuracy'],  label='val   accuracy')
-plt.title('Training vs. Validation Accuracy')
+plt.title('CNN #1: Accuracy vs. Epoch')
 plt.xlabel('Epoch')
 plt.ylabel('Accuracy')
 plt.legend()
 plt.tight_layout()
-plt.savefig('accuracy_plot.png')
+plt.savefig('CNN1_accuracy_plot.png')
 plt.show()
 
 # eval
@@ -163,9 +163,9 @@ y_pred = (y_pred_prob > 0.5).astype(int)
 
 # print out analysis 
 cm = confusion_matrix(y_test, y_pred, labels=[0,1])
-print("\nConfusion Matrix (Test set):")
+print("\nCNN #1: Confusion Matrix:")
 print(pd.DataFrame(cm,
                    index=[f"true_{cls}" for cls in le.inverse_transform([0,1])],
                    columns=[f"pred_{cls}" for cls in le.inverse_transform([0,1])]))
-print("\nClassification Report (Test set):")
+print("\nClassification Report:")
 print(classification_report(y_test, y_pred, target_names=le.inverse_transform([0,1])))

@@ -13,6 +13,8 @@ To run this project successfully, the following packages will be required:
 
 Note: no special technical requirements are necessary for this project. 
 
+# GENERAL STRUCTURE OF PROJECT FILE SYSTEM
+
 541-project/
 ├── approach_a
 │   ├── models
@@ -45,8 +47,7 @@ Note: no special technical requirements are necessary for this project.
 
 Focusing in on a Random Forest Classifier, we ran (3) different feature extraction scripts to test which features would lead to the best classification of Major vs Minor audio chords. 
 
-# 3 METHODS OF FEATURE EXTRACTION 
-
+# 3 METHODS OF FEATURE EXTRACTION + CSV CREATION
 1. fft_ratio_peaks.py
 
 run with: python3 fft_ratio_peaks.py
@@ -82,6 +83,7 @@ for each data sample:
 --> saves the output table as 'librosa_data.csv' with columns setup as:
 filename,   label,  chroma_mean_0,  ...,    chroma_mean11, ....,  contrast_std_6
 
+# AFTER GENERATING THE 3 CSV'S:
 # TESTING EACH FEATURE EXTRACTION METHOD 
 # RANDOM FOREST IMPLEMENTATION --> run_rf.py
 
@@ -97,6 +99,7 @@ To experiment with these different feature methods, we loaded them all into thei
 
 
 ## APPROACH B: CONVOLUTIONAL NEURAL NETWORKS 
+# data: utilizes the (3) csvs created earlier. 
 
 541-project/
 ├── approach_b
@@ -107,24 +110,28 @@ Focusing now on utilizing Deep Learning, we experimented with (3) different Conv
 
 # CNN #1 (cnn1.py)
 
-run with: python3 cnn1.py --data /path/to/csvs
+run with: python3 cnn1.py --data /path/to/FOLDER_WITH_ALL_3_CSVS
 example: python3 cnn1.py --data /Users/annachau/Documents/USC/EE541/final_project/541-project/data
+note: this /data folder should contain ALL of the following:
+1. harmonic.csv
+2. librosa.csv
+3. fft_ratio.csv
 
-In this file, you will find a multi-input 1D CNN model that merges ALL three feature sets into one large feature set called 'merged_data.csv'. The model concatenates three CONV1D branches (one for the harmonic intervals, one for the Librosa features, and one for the singualr FFT ratio), and follows with a dense head with batch normalization and also droout. It trains for a total of 50 epochs and then prints out the respective classification report. 
+In this file, you will find a multi-input 1D CNN model that merges ALL three feature sets into one large feature set. The model concatenates three CONV1D branches (one for the harmonic intervals, one for the Librosa features, and one for the singualar FFT ratio), and follows with a dense head with batch normalization and also droout. It trains for a total of 50 epochs and then prints out the respective classification report. 
 
 # CNN #2 (cnn2.py)
 
-run with: python3 cnn2.py --data /path/to/csvs
+run with: python3 cnn2.py --data /path/to/MAJORMINOR_AUDIO_FILES
 example: python3 cnn2.py --data /Users/annachau/Documents/USC/EE541/final_project/541-project/data/Audio_Files
 
 In this file, you will find a stand alone 1D CNN model that ONLY utilizes the seven harmonic intervals features (H2/H1, etc..) and stacks three CONV1D layers, flattens, and then outputs a single sigmoid neuron. This model trains for 200 epochs and then prints out the respective classification report of the model. 
 
 # CNN #3 (cnn3.py)
 
-run with: python3 cnn3.py --data /path/to/csvs
+run with: python3 cnn3.py --data /path/to/MERGED_CSV
 example: python3 cnn3.py --data /Users/annachau/Documents/USC/EE541/final_project/541-project/data/merged_data.csv
 
-In this file, you will find a stand alone 1D CNN model that utilizes a CONCATENATED dataset of the 3 individual feature datasets discussed earlier. In other words, this CNN will be receiving the Librosa features and the Harmonic Interval Features. This model trainas for 200 epochs and then prints out the respective classification report of the model.
+In this file, you will find a stand alone 1D CNN model that utilizes a PRE-CONCATENATED dataset of the 3 individual feature datasets discussed earlier. In other words, this CNN will be receiving the Librosa features, the Harmonic Interval Features, and the FFT Ratio data. The difference between CNN #1 and CNN #3 is that CNN #1 takes in three input files and concatenates as part of its process to perform CONV1D on each individually first. CNN #3 takes in an already concatenated csv file and performs its process on this directly. This model trainas for 200 epochs and then prints out the respective classification report of the model.
 
 
 ## MODEL LIST
@@ -132,8 +139,8 @@ In this file, you will find a stand alone 1D CNN model that utilizes a CONCATENA
 2. Random Forest Classifier Model #2 -- Singular FFT Ratio Feature (H2/H1) (SIZE = 3.5MB)
 3. Random Forest Classifier Model #3 -- Full Harmonic Interval Features (H2/H1, .. H7/H1) (SIZE = 2.1 MB)
 
-4. Convolutional Neural Network #1 -- Single Input: Full Harmonic Interval Features (SIZE = 1.9 MB)
-5. Convolutional Neural Network #2 -- Multi Input: Concatenation of the 3 Feature Sets (SIZE = 522 KB)
-5. Convolutional Neural Network #3 -- Single Input: Concatenation of 3 Feature Sets (SIZE = 2 MB)
+4. Convolutional Neural Network #1 -- Multi Input: Concatenation of the 3 Feature Sets (SIZE = 522 KB)
+5. Convolutional Neural Network #2 -- Single Input: Full Harmonic Interval Features (SIZE = 1.9 MB)
+6. Convolutional Neural Network #3 -- Single Input: Concatenation of 3 Feature Sets (SIZE = 2 MB)
 
 Note: all models are saved in respective approach_X/model folder
