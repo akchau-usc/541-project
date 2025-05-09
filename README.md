@@ -15,27 +15,22 @@ Note: no special technical requirements are necessary for this project.
 
 541-project/
 ├── approach_a
+│   ├── models
 │   ├── fft_ratio_peaks.py
 │   ├── harmonic_feat.py
 │   ├── librosa_feat.py
 │   └── run_rf.py
 ├── approach_b
+│   ├── models
 │   ├── cnn1.py
-│   └── cnn2.py
+│   ├── cnn2.py
+│   └── cnn3.py
 ├── data
 │   ├── Audio_Files
 │   ├── fft_ratio_data.csv
 │   ├── harmonic_data.csv
 │   ├── librosa_data.csv
 │   └── merged_data.csv
-├── process_data
-│   ├── major_display
-│   ├── display_data.py
-│   ├── major_data.csv
-│   ├── minor_data.csv
-│   ├── opendata.py
-│   ├── preprocess.py
-│   └── test.ipynb
 ├── LICENSE
 └── README.md
 
@@ -129,10 +124,12 @@ In this file, you will find a stand alone 1D CNN model that utilizes a CONCATENA
 
 
 ## MODEL LIST
-1. Random Forest Classifier Model #1 -- Librosa Features
-2. Random Forest Classifier Model #2 -- Singular FFT Ratio Feature (H2/H1)
-3. Random Forest Classifier Model #3 -- Full Harmonic Interval Features (H2/H1, .. H7/H1)
+1. Random Forest Classifier Model #1 -- Librosa Features (SIZE = 2.7MB)
+2. Random Forest Classifier Model #2 -- Singular FFT Ratio Feature (H2/H1) (SIZE = 3.5MB)
+3. Random Forest Classifier Model #3 -- Full Harmonic Interval Features (H2/H1, .. H7/H1) (SIZE = 2.1 MB)
 
-4. Convolutional Neural Network #1 -- Single Input: Full Harmonic Interval Features
+4. Convolutional Neural Network #1 -- Single Input: Full Harmonic Interval Features (SIZE = 1.9 MB)
 5. Convolutional Neural Network #2 -- Multi Input: Concatenation of the 3 Feature Sets
-5. Convolutional Neural Network #3 -- Single Input: Concatenation of 3 Feature Sets
+5. Convolutional Neural Network #3 -- Single Input: Concatenation of 3 Feature Sets (SIZE = 2 MB)
+
+Note: all models are saved in respective approach_X/model folder
