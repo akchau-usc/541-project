@@ -55,18 +55,34 @@ def extract_intervals(path):
 '''
 build_intervals_dataframe --> creates df for the harmonic features
 '''
+import os
+import pandas as pd
+
 def build_intervals_dataframe(data_dir):
     rows = []
-    for chord, lbl in [("Minor", 0), ("Major", 1)]:
+    for chord in [("Major"), ("Minor")]:
         folder = os.path.join(data_dir, chord)
-        for fname in os.listdir(folder):
-            if fname.lower().endswith(".wav"):
-                feats = extract_intervals(os.path.join(folder, fname))
-                row = {f"interval_{i+1}": feats[i] for i in range(len(feats))}
-                row['label']    = lbl
-                row['filename'] = fname
-                rows.append(row)
+        for fname in sorted(os.listdir(folder)):
+            if not fname.lower().endswith(".wav"):
+                continue
+            feats = extract_intervals(os.path.join(folder, fname))
+            # build row dict
+            row = {
+                "filename": fname,
+                "label": chord
+            }
+            # add interval_1 … interval_N
+            for i, val in enumerate(feats, start=1):
+                row[f"interval_{i}"] = val
+            rows.append(row)
+
     df = pd.DataFrame(rows)
+    # enforce column order: filename, label, then intervals in numeric order
+    interval_cols = sorted(
+        [c for c in df.columns if c.startswith("interval_")],
+        key=lambda x: int(x.split("_")[1])
+    )
+    df = df[["filename", "label"] + interval_cols]
     return df
 
 if __name__ == "__main__":

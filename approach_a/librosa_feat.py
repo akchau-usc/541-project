@@ -58,16 +58,26 @@ def extract_features(path, sr=44100, n_mfcc=13):
 
 # build the features df 
 rows = []
-base = "/Users/annachau/Documents/USC/EE541/final_project/541-project/data/Audio_Files" 
-for label in ["Major","Minor"]:
-    folder = os.path.join(base, label)
-    for fname in os.listdir(folder):
-        if fname.lower().endswith('.wav'):
-            feats = extract_features(os.path.join(folder, fname))
-            feats['label'] = label
-            rows.append(feats)
+base = "/Users/annachau/Documents/USC/EE541/final_project/541-project/data/Audio_Files"
+for label in ["Major", "Minor"]:
+     folder = os.path.join(base, label)
+     for fname in sorted(os.listdir(folder)):
+        if not fname.lower().endswith(".wav"):
+            continue
+        feats = extract_features(os.path.join(folder, fname))
+        # build row dict
+        row = {
+            "filename": fname,
+            "label":    label
+        }
+        # add all feature entries
+        row.update(feats)
+        rows.append(row)
+
 df = pd.DataFrame(rows)
-#print(df.shape, df.columns)
+# reorder columns: filename, label, then sorted feature columns
+feature_cols = sorted([c for c in df.columns if c not in ("filename", "label")])
+df = df[["filename", "label"] + feature_cols]
 
 # save csv
 output_path = "/Users/annachau/Documents/USC/EE541/final_project/541-project/data/librosa_data.csv"
