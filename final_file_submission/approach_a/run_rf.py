@@ -11,11 +11,11 @@ from sklearn.metrics import classification_report, confusion_matrix
 
 import matplotlib.pyplot as plt
 
-FEATURES_DIR  = "/Users/annachau/Documents/USC/EE541/final_project/541-project/data"
+#FEATURES_DIR  = "/Users/annachau/Documents/USC/EE541/final_project/541-project/data"
 
-INTERVALS_CSV = os.path.join(FEATURES_DIR, "harmonic_data.csv")
-LIBROSA_CSV   = os.path.join(FEATURES_DIR, "librosa_data.csv")
-FFT_CSV       = os.path.join(FEATURES_DIR, "fft_ratio_data.csv") 
+#INTERVALS_CSV = os.path.join(FEATURES_DIR, "harmonic_data.csv")
+#LIBROSA_CSV   = os.path.join(FEATURES_DIR, "librosa_data.csv")
+#FFT_CSV       = os.path.join(FEATURES_DIR, "fft_ratio_data.csv") 
 
 def parse_args():
     parser = argparse.ArgumentParser()
