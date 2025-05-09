@@ -113,7 +113,7 @@ def main():
 
     # hyper parameters
     test_size    = 0.3
-    random_seed  = 7
+    random_seed  = 4
     batch_size   = 32
     epochs       = 200
     lr           = 1e-3
@@ -137,7 +137,7 @@ def main():
                                batch_size=batch_size)
 
     # save model
-    model_path = "/Users/annachau/Documents/USC/EE541/final_project/541-project/approach_b/models/cnn2/cnn2_m2.h5"
+    model_path = "/Users/annachau/Documents/USC/EE541/final_project/541-project/approach_b/models/cnn2/cnn2_m3.h5"
     classifier.save(model_path)
 
     # eval
