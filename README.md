@@ -7,7 +7,6 @@
 
 # 9 MAY 2025
 
-tree -I "__pycache__" --dirsfirst -L 2
 To run this project successfully, the following packages will be required:
 - python 3.7 or newer 
 
@@ -134,13 +133,15 @@ example: python3 cnn3.py --data /Users/annachau/Documents/USC/EE541/final_projec
 In this file, you will find a stand alone 1D CNN model that utilizes a PRE-CONCATENATED dataset of the 3 individual feature datasets discussed earlier. In other words, this CNN will be receiving the Librosa features, the Harmonic Interval Features, and the FFT Ratio data. The difference between CNN #1 and CNN #3 is that CNN #1 takes in three input files and concatenates as part of its process to perform CONV1D on each individually first. CNN #3 takes in an already concatenated csv file and performs its process on this directly. This model trainas for 200 epochs and then prints out the respective classification report of the model.
 
 
-## MODEL LIST
-1. Random Forest Classifier Model #1 -- Librosa Features (SIZE = 2.7MB)
-2. Random Forest Classifier Model #2 -- Singular FFT Ratio Feature (H2/H1) (SIZE = 3.5MB)
-3. Random Forest Classifier Model #3 -- Full Harmonic Interval Features (H2/H1, .. H7/H1) (SIZE = 2.1 MB)
+## SAVED MODELS
 
-4. Convolutional Neural Network #1 -- Multi Input: Concatenation of the 3 Feature Sets (SIZE = 522 KB)
-5. Convolutional Neural Network #2 -- Single Input: Full Harmonic Interval Features (SIZE = 1.9 MB)
-6. Convolutional Neural Network #3 -- Single Input: Concatenation of 3 Feature Sets (SIZE = 2 MB)
+| Model                           | Size   |
+| ------------------------------- | ------ |
+| RF — Librosa features           | 2.7 MB |
+| RF — FFT ratio (H2/H1)          | 3.5 MB |
+| RF — Harmonic interval features | 2.1 MB |
+| CNN1 — Multi-input              | 522 KB |
+| CNN2 — Harmonic-only            | 1.9 MB |
+| CNN3 — Pre-merged               | 2.0 MB |
 
 Note: all models are saved in respective approach_X/model folder
