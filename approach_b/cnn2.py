@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import argparse
 
 from scipy.io import wavfile
 from scipy.fft import fft, fftfreq
@@ -94,12 +95,23 @@ class CNNChordClassifier:
         self.model.save(path)
         print(f"model saved to {path}")
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="train/evaluate cnn")
+    parser.add_argument(
+        "--data", type=str, required=True,
+        help="folder containing Major/Minor .wav files")
+    parser.add_argument(
+        "--output_model", type=str, default="cnn2.h5",
+        help="filename (with .h5) to save the trained model")
+    return parser.parse_args()
+
 def main():
-    data_dir = "/Users/annachau/Documents/USC/EE541/final_project/541-project/data/Audio_Files"
+    args = parse_args()
     features, labels = [], []
 
     for chord, lbl in [("Minor",0), ("Major",1)]:
-        folder = os.path.join(data_dir, chord)
+        folder = os.path.join(args.data, chord)
         for fname in sorted(os.listdir(folder)):
             if not fname.lower().endswith(".wav"):
                 continue
@@ -112,7 +124,7 @@ def main():
     y = np.array(labels, dtype=np.int32)
 
     # hyper parameters
-    test_size    = 0.3
+    test_size    = 0.2
     random_seed  = 4
     batch_size   = 32
     epochs       = 200
@@ -137,8 +149,7 @@ def main():
                                batch_size=batch_size)
 
     # save model
-    model_path = "/Users/annachau/Documents/USC/EE541/final_project/541-project/approach_b/models/cnn2/cnn2_m3.h5"
-    classifier.save(model_path)
+    classifier.save(args.output_model)
 
     # eval
     loss, acc = classifier.evaluate(X_te, y_te)

@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 import joblib
+import argparse
 
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
@@ -10,13 +11,23 @@ from sklearn.metrics import classification_report, confusion_matrix
 
 import matplotlib.pyplot as plt
 
-DATA_DIR      = "/Users/annachau/Documents/USC/EE541/final_project/541-project/data/Audio_Files"
 FEATURES_DIR  = "/Users/annachau/Documents/USC/EE541/final_project/541-project/data"
-MODELS_DIR = "/Users/annachau/Documents/USC/EE541/final_project/541-project/approach_a/models"
 
 INTERVALS_CSV = os.path.join(FEATURES_DIR, "harmonic_data.csv")
 LIBROSA_CSV   = os.path.join(FEATURES_DIR, "librosa_data.csv")
 FFT_CSV       = os.path.join(FEATURES_DIR, "fft_ratio_data.csv") 
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--data', type=str, required=True,
+        help='folder with harmonic_data.csv, librosa_data.csv, fft_ratio_data.csv'
+    )
+    parser.add_argument(
+        '--output_model', type=str, default='.',
+        help='directory in which to save model .pkl files'
+    )
+    return parser.parse_args()
 
 def plot_confusion(cm, classes, title=None):
     fig, ax = plt.subplots(figsize=(4,4))
@@ -38,7 +49,7 @@ def plot_confusion(cm, classes, title=None):
     plt.tight_layout()
     plt.show()
 
-def run_intervals_rf(csv_path, test_size=0.3, random_state=7):
+def run_intervals_rf(csv_path, output_model, test_size=0.3, random_state=7):
     df = pd.read_csv(csv_path)
     X = df[[f"interval_{i+1}" for i in range(7)]].values
     y = df["label"].astype(str).values
@@ -53,7 +64,7 @@ def run_intervals_rf(csv_path, test_size=0.3, random_state=7):
     rf.fit(X_train, y_train)
     preds = rf.predict(X_val)
 
-    joblib.dump(rf, os.path.join(MODELS_DIR, "harmonics_rf.pkl"))
+    joblib.dump(rf, os.path.join(output_model, "harmonics_rf.pkl"))
 
     print("=== Harmonic Intervals RF ===")
     print(classification_report(y_val, preds, target_names=["Minor","Major"]))
@@ -70,7 +81,7 @@ def run_intervals_rf(csv_path, test_size=0.3, random_state=7):
     plt.tight_layout()
     plt.show()
 
-def run_librosa_rf(csv_path, test_size=0.3, random_state=42):
+def run_librosa_rf(csv_path, output_model, test_size=0.3, random_state=42):
     df = pd.read_csv(csv_path)
     le = LabelEncoder().fit(df['label'])
     y = le.transform(df['label'])
@@ -87,7 +98,7 @@ def run_librosa_rf(csv_path, test_size=0.3, random_state=42):
     rf.fit(X_train, y_train)
     preds = rf.predict(X_val)
 
-    joblib.dump(rf, os.path.join(MODELS_DIR, "librosa_rf.pkl"))
+    joblib.dump(rf, os.path.join(output_model, "librosa_rf.pkl"))
 
     print("\n=== Librosa RF ===")
     print(classification_report(y_val, preds, target_names=le.classes_))
@@ -104,7 +115,7 @@ def run_librosa_rf(csv_path, test_size=0.3, random_state=42):
     plt.tight_layout()
     plt.show()
 
-def run_fft_ratio_rf(csv_path, test_size=0.3, random_state=42):
+def run_fft_ratio_rf(csv_path, output_model, test_size=0.3, random_state=42):
     df = pd.read_csv(csv_path)
     le = LabelEncoder().fit(df['label'])
     y = le.transform(df['label'])
@@ -120,7 +131,7 @@ def run_fft_ratio_rf(csv_path, test_size=0.3, random_state=42):
     rf.fit(X_train, y_train)
     preds = rf.predict(X_val)
 
-    joblib.dump(rf, os.path.join(MODELS_DIR, "fft_ratio_rf.pkl"))
+    joblib.dump(rf, os.path.join(output_model, 'fft_ratio_rf.pkl'))
 
     print("\n=== FFT Ratio RF ===")
     print(classification_report(y_val, preds, target_names=le.classes_))
@@ -129,6 +140,13 @@ def run_fft_ratio_rf(csv_path, test_size=0.3, random_state=42):
     plot_confusion(cm, le.classes_, title="FFT Ratio RF")
 
 if __name__ == "__main__":
-    run_intervals_rf(INTERVALS_CSV)
-    run_librosa_rf(LIBROSA_CSV)
-    run_fft_ratio_rf(FFT_CSV)
+    args = parse_args()
+    os.makedirs(args.output_model, exist_ok=True)
+
+    intervals_csv = os.path.join(args.data, 'harmonic_data.csv')
+    librosa_csv = os.path.join(args.data, 'librosa_data.csv')
+    fft_csv = os.path.join(args.data, 'fft_ratio_data.csv')
+
+    run_intervals_rf(intervals_csv, args.output_model)
+    run_librosa_rf(librosa_csv, args.output_model)
+    run_fft_ratio_rf(fft_csv, args.output_model)

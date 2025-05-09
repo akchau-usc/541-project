@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import argparse
 
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
@@ -75,8 +76,19 @@ class CNNChordClassifier:
         self.model.save(path)
         print(f"model saved to {path}")
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--data", type=str, required=True,
+        help="path to merged_data.csv (all 3 feature sets)")
+    parser.add_argument(
+        "--output_model", type=str, default="cnn3.h5",
+        help="where to save the trained .h5 model")
+    return parser.parse_args()
+
 def main():
-    features_csv = "/Users/annachau/Documents/USC/EE541/final_project/541-project/data/merged_data.csv"
+    #features_csv = "/Users/annachau/Documents/USC/EE541/final_project/541-project/data/merged_data.csv"
+    args = parse_args()
 
     test_size    = 0.2
     random_seed  = 7
@@ -84,7 +96,7 @@ def main():
     epochs       = 50
     lr           = 1e-3
 
-    df = pd.read_csv(features_csv)
+    df = pd.read_csv(args.data)
     X = df.drop(columns=['filename', 'label']).values
     y_raw = df['label'].values
 
@@ -117,8 +129,7 @@ def main():
     )
 
     # save model
-    model_path = "/Users/annachau/Documents/USC/EE541/final_project/541-project/approach_b/models/cnn3/cnn3_m1.h5"
-    classifier.save(model_path)
+    classifier.save(args.output_model)
 
     # eval
     loss, acc = classifier.evaluate(X_te, y_te)
@@ -149,5 +160,6 @@ def main():
 
     plt.tight_layout()
     plt.show()
+
 if __name__ == "__main__":
     main()
