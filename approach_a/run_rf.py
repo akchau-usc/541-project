@@ -38,7 +38,7 @@ def plot_confusion(cm, classes, title=None):
 def run_intervals_rf(csv_path, test_size=0.3, random_state=7):
     df = pd.read_csv(csv_path)
     X = df[[f"interval_{i+1}" for i in range(7)]].values
-    y = df["label"].astype(int).values
+    y = df["label"].astype(str).values
 
     X_train, X_val, y_train, y_val = train_test_split(
         X, y, test_size=test_size, stratify=y, random_state=random_state)
@@ -69,8 +69,8 @@ def run_librosa_rf(csv_path, test_size=0.3, random_state=42):
     df = pd.read_csv(csv_path)
     le = LabelEncoder().fit(df['label'])
     y = le.transform(df['label'])
-    X = df.drop(columns=['label']).values
-    feat_names = df.drop(columns=['label']).columns
+    X = df.drop(columns=['filename','label']).values
+    feat_names = df.drop(columns=['filename','label']).columns
 
     X_train, X_val, y_train, y_val = train_test_split(
         X, y, test_size=test_size, stratify=y, random_state=random_state)
